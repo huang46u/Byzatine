@@ -27,6 +27,7 @@ def symmetry(image, param_init):
 
 def comput_missing_part(image,diff,threshold ):
     pos_diff = diff * (diff>0)
+    plt.figure(figsize=(10,10))
     plt.subplot(1,2,1)
     plt.xlabel("positive_difference")
     plt.imshow(diff* (diff>0),cmap = 'gray')
@@ -47,7 +48,7 @@ plt.imshow(image)
 # extract hand mask
 hand = ext.Extract_part_json("D:/M2/Stage/Byzatine/Zacos-genevre/Zacos-Geneve/ann/cdn_2004_0355_A.jpg.json",'classTitle','Part_hand')
 hand_image = hand['Part_hand0'] + hand['Part_hand1']
-plt.imshow(hand_image)
+plt.imshow(hand_image,cmap="gray")
 #%%
 init = np.array([0.5*np.pi, 0])
 diff = symmetry(hand_image,init)
@@ -68,7 +69,7 @@ image = plt.imread("../Qijia/ds0/masks_human/Tatish 2363 patrice strat?ge  copie
 plt.imshow(image)
 flower = ext.Extract_part_json("../Qijia/ds0/ann/Tatish 2363 patrice strat?ge  copie 2 A.jpg.json",'classTitle','Fleuron')
 flower_image = flower["Fleuron0"]
-plt.imshow(flower_image)
+plt.imshow(flower_image,cmap="gray")
 # %%
 init = np.array([0.5*np.pi, 30])
 diff = symmetry(flower_image,init)
@@ -78,7 +79,7 @@ cross = ext.Extract_part_json("../Qijia/ds0/ann/Tatish 2451 Michel  copie A.jpg.
 cross_image = cross["Croix_recroisetee0"]
 w,h = cross_image.shape
 cross_image = transform.resize(cross_image,(w,w))
-plt.imshow(cross_image)
+plt.imshow(cross_image,cmap="gray")
 
 # %%
 init = np.array([0.5*np.pi, -60])
