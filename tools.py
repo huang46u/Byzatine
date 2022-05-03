@@ -7,7 +7,7 @@ import json
 import os
 import cv2
 from sympy import comp
-
+from skimage.draw import line as skimage_line
 def unique_value(img):
     return np.unique(img.reshape(-1,img.shape[1]))[1:]
 
@@ -20,230 +20,32 @@ def down_sample(object, scale=8):
     Return:
         Down sampled image
     """
-    object = block_reduce(object,block_size=(scale,scale))
+    object = block_reduce(object,block_size=(scale,scale),func = np.mean)
     object = (object!=0)*object
     return object
     
+def line(theta, length):
+    x1, y1 = (0, 0)
+    x2 = int(round(length * math.cos(theta)))
+    y2 = int(round(length * -math.sin(theta)))
+    ii, jj = skimage_line(y1, x1, y2, x2)
+    return ii, jj
+
 def bresenham_ray(image, point, theta):
-    opposite = False
-    steep = False
-    if(theta>=math.pi): 
-        theta -= math.pi
-        opposite = True
-    y,x = point
+    theta = math.fmod(theta, 2 * np.pi)
     w, h = image.shape
-    height = 0
-    coord = []
-    if(theta<math.pi*0.5):
-        if(theta>0.25*math.pi):
-            steep = True
-            theta = 0.5*math.pi - theta
-        step = abs(math.tan(theta))
-        if(not steep):
-            while(x<h and y<w and x>=0 and y>=0):
-                coord.append([y,x])
-                height += step
-                if(height>=0.5):
-                    if(not opposite): 
-                        y -= 1
-                    else:
-                        y += 1
-                    height -= 1
-                if(not opposite): 
-                    x += 1
-                else:
-                    x -= 1
-        else:
-            while(x<h and y<w and x>=0 and y>=0):
-                coord.append([y,x])
-                height += step
-                if(height>=0.5):
-                    if(not opposite): 
-                        x += 1
-                    else:
-                        x -= 1
-                    height -= 1
-                if(not opposite): 
-                    y -= 1
-                else:
-                    y += 1
-    elif (theta == math.pi*0.5):
-        if(not opposite):
-            for i in range(0,y):
-                coord.append((i,x))
-        else:
-            for i in range(y, w):
-                coord.append((i,x))
-    else:
-        theta = theta-math.pi
-        if(theta<-0.25*math.pi):
-            theta = -(theta+0.5*math.pi)
-            steep = True
-        step = abs(math.tan(theta))
-        if(not steep):
-            while(x<h and y<w and x>=0 and y>=0):
-                height += step
-                coord.append([y,x])
-                if(height>=0.5):
-                    if(not opposite): 
-                        y -= 1
-                    else:
-                        y += 1
-                    height -= 1
-                if(not opposite): 
-                    x -= 1
-                else:
-                    x += 1
-        else:
-            while(x<h and y<w and x>=0 and y>=0):
-                height += step
-                coord.append([y,x])
-                if(height>=0.5):
-                    if(not opposite): 
-                        x += 1
-                    else:
-                        x -= 1
-                    height -= 1
-                if(not opposite): 
-                    y += 1
-                else:
-                    y -= 1
-    return np.array(coord)
+    rho = 2 * max(w, h)
+    ii, jj = line(theta, rho)
+    #translate the origin to point
+    ii += point[0]
+    jj += point[1]
+    ii, jj = restrict(ii,jj, h, w)
+    return ii, jj
+    
+def restrict(ii, jj, height, width):
+    mask = (ii >= 0) & (ii < width) & (jj >= 0) & (jj < height)
+    return ii[mask], jj[mask]
 
-def bresenham_line(image, point, theta):
-    steep = False
-    reverse = False
-    if(theta>=math.pi): 
-        theta -= math.pi
-        reverse = True
-    y,x = point
-    w, h = image.shape
-    height = 0
-    coord = []
-    if(theta<math.pi*0.5):
-        if(theta>0.25*math.pi):
-            steep = True
-            theta = 0.5*math.pi - theta
-        step = abs(math.tan(theta))
-        if(not steep):
-            while(x<h and y<w and x>=0 and y>=0):
-                coord.append([y,x])
-                height += step
-                if(height>=0.5):
-                    y -= 1   
-                    height -= 1        
-                x += 1
-            y,x = point
-            while(x<h and y<w and x>=0 and y>=0):
-                coord.append([y,x])
-                height += step
-                if(height>=0.5):
-                    y += 1
-                    height -= 1
-                x -= 1
-        else:
-            while(x<h and y<w and x>=0 and y>=0):
-                coord.append([y,x])
-                height += step
-                if(height>=0.5):
-                    x += 1
-                    height -= 1
-                y -= 1
-            y,x = point
-            while(x<h and y<w and x>=0 and y>=0):
-                coord.append([y,x])
-                height += step
-                if(height>=0.5):
-                    x -= 1
-                    height -= 1
-                y += 1
-    elif (theta == math.pi*0.5):
-            for i in range(0, w):
-                coord.append((i,x))
-            
-    else:
-        theta = theta-math.pi
-        if(theta<-0.25*math.pi):
-            theta = -(theta+0.5*math.pi)
-            steep = True
-        step = abs(math.tan(theta))
-        if(not steep):
-            while(x<h and y<w and x>=0 and y>=0):
-                height += step
-                coord.append([y,x])
-                if(height>=0.5):
-                    y -= 1
-                    height -= 1
-                x -= 1
-            y,x = point
-            while(x<h and y<w and x>=0 and y>=0):
-                height += step
-                coord.append([y,x])
-                if(height>=0.5):
-                    y += 1
-                    height -= 1
-                x += 1
-        else:
-            while(x<h and y<w and x>=0 and y>=0):
-                height += step
-                coord.append([y,x])
-                if(height>=0.5):
-                    x += 1
-                    height -= 1
-                y += 1
-            y,x = point
-            while(x<h and y<w and x>=0 and y>=0):
-                height += step
-                coord.append([y,x])
-                if(height>=0.5):
-                    x -= 1
-                    height -= 1
-                y -= 1
-    coord = np.array(coord)
-    if(reverse): coord = np.flip(coord,0)    
-    return coord
-
-
-def debug_surround(image,region,bin = 120):
-    coords = np.argwhere(region)
-    j=0
-    for point in (coords):
-        a = np.zeros(image.shape)
-        intersect = []
-        for i in np.arange(0,2,2/bin):
-            coord = bresenham_ray(image,point,i*math.pi)
-            if(image[coord[:,0],coord[:,1]].sum()==0):
-                intersect.append(0)
-            else: 
-                a[coord[:,0],coord[:,1]]=np.max(image)
-                intersect.append(1)
-        intersect = np.array(intersect)
-        if(j%100 ==0):
-            plt.imshow(a+image)
-            plt.show()
-            print(intersect.sum()*(2/bin))
-        j+=1
-        
-def debug_bresenham(image,region,bin = 120):
-    coords = np.argwhere(region)
-    j=0
-    for point in (coords):
-        a = np.zeros(image.shape)
-        intersect = []
-        for i in np.arange(0,1,1/bin):
-            coord = bresenham_line(image,point,i*math.pi)
-            if(image[coord[:,0],coord[:,1]].sum()==0):
-                intersect.append(0)
-            else: 
-                a[coord[:,0],coord[:,1]]=np.max(image)
-                intersect.append(1)
-        intersect = np.array(intersect)
-        if(j%100 ==0):
-            plt.imshow(a+image)
-            plt.show()
-            print(intersect.sum()*(2/bin))
-        j+=1
-        
 def parse_json(filename):
     """Parse json file 
     Args:
