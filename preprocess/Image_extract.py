@@ -1,4 +1,4 @@
-#%%
+
 import json
 from aiohttp import JsonPayload
 import numpy as np
@@ -10,12 +10,17 @@ sys.path.append('../')
 from skimage.draw import polygon
 import re
 
-def Extract_image_all_part(json_path, L_dict):
+def Extract_image_mask(json_path, category = False, filter = False, L_dict = None):
     """
     Parameters
     ----------
         json_path: string
             The path of the annotation file
+        category: bool
+            If save mask image in category
+        filter: bool
+            Extract all the labels or not. If it is ture, L_dict will
+            be needed 
         L_dict : string array
             The array of interested label
     Returns
@@ -33,10 +38,11 @@ def Extract_image_all_part(json_path, L_dict):
         h = dictionary['size']['height']
         for i in range(len(dictionary['objects'])):
             label = dictionary['objects'][i]['classTitle']
-            if(label in L_dict):
-                cate = label.split("_")
-                if(cate[0] not in Image_dict.keys()):
-                    Image_dict[cate[0]] = []
+            if(not filter or (filter and (label in L_dict))):
+                if(category):
+                    cate = label.split("_")
+                    if(cate[0] not in Image_dict.keys()):
+                        Image_dict[cate[0]] = []
                 vertices = np.array(dictionary['objects'][i]['points']['exterior'])
                 vertices[:,[0,1]] = vertices[:,[1,0]]
                 new_image = np.zeros((w,h))
@@ -44,31 +50,19 @@ def Extract_image_all_part(json_path, L_dict):
                 new_image[rr,cc] = 1
                 if(not (label) in label_set.keys()):
                     label_set[label] = 0
-                    Image_dict[cate[0]].append((label, new_image))
+                    if(category):
+                        Image_dict[cate[0]].append((label, new_image))
+                    else:
+                        Image_dict[label+"_" + str(label_set[label])]= new_image
                 else:
                     label_set[label]+=1
-                    Image_dict[cate[0]].append((label+"_"+str(label_set[label]), new_image))
-                
+                    if(category):
+                        Image_dict[cate[0]].append((label+"_"+str(label_set[label]), new_image))
+                    else:
+                        Image_dict[label+"_" + str(label_set[label])]= new_image
     return Image_dict
-
-def Extract_all_image_json(dir_path, label, pattern):
-    """
-    Parameters
-    ----------
-        dir_path: string
-            path of the directory
-    Returns
-    -------
-        Image_part :list of ndarray
-            List of images contain each part
-    """
-    Image_list = []
-    for file in os.listdir(dir_path):
-        filename = os.path.join(dir_path,file,".json")
-        Image_list.append(Extract_part_json(filename, label, pattern))
-    return Image_list
                     
-def Extract_part_json(json_path, label, pattern):
+def Extract_image_part(json_path, label, pattern):
     """
     Parameters
     ----------
@@ -100,7 +94,3 @@ def Extract_part_json(json_path, label, pattern):
                 Image_dict[dictionary['objects'][i][label]+str(id)] = new_image
                 id+=1
     return Image_dict
-
-
-
-# %%
