@@ -2,6 +2,14 @@ import math
 import numpy as np
 import tools as tl
 def f(x):
+    """
+    Membership function of angle criteria
+    
+    Parameters:
+    -----------
+    x : float
+        Radian covers    
+    """
     if(x>=0.5*math.pi): return (x-0.5*math.pi)/(1.5*math.pi)
     if(x<0.5*math.pi): return 0    
             
