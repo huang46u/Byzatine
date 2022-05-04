@@ -8,7 +8,7 @@ from preprocess import *
 from skimage import transform
 import preprocess.Image_extract as ext
 import imp
-import symmetry as sm
+import relation.symmetry as sm
 imp.reload(sm)
 imp.reload(tl)
 imp.reload(plot)

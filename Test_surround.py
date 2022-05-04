@@ -5,8 +5,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from skimage.morphology import convex_hull_image, area_opening, binary_erosion,binary_opening
-import surround as su
-import math
+import relation.surround as su
 import tools as tl
 import preprocess.Image_extract as ext
 import enlacement.enlacement as en

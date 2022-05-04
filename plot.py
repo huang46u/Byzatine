@@ -1,13 +1,9 @@
 from cv2 import CAP_OPENNI_IMAGE_GENERATOR_OUTPUT_MODE, line
 import numpy as np
 import matplotlib.pyplot as plt
-import math
 from skimage.measure import block_reduce
 from skimage.morphology import binary_closing,label,disk, binary_dilation
 from scipy.optimize import fmin
-import json
-import os
-import cv2
 from sympy import comp
 
 def plot_morpho(morpho_ref, morpho_res, nece_deg, poss_deg, mean_deg):
@@ -30,7 +26,7 @@ def plot_two_image(image1, image2):
     plt.imshow(image2)
     plt.show()
     
-def plot_histogram_force(hist, bins):
+def plot_histogram(hist, bins):
     #Plot histogram of angle
     width = np.diff(bins)
     center = (bins[:-1] + bins[1:]) / 2

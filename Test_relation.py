@@ -8,7 +8,7 @@ from pyparsing import srange
 from torch import greater
 import tools as tl
 from preprocess import *
-import relation_analyse as rel
+import relation.relation_analyse as rel
 import preprocess.Image_extract as ext
 import imp
 import os
