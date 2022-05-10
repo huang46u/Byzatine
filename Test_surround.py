@@ -18,7 +18,7 @@ Image_dict = ext.Extract_image_mask(json_path)
 print(Image_dict.keys())
 # %%
 # Extract differnt part of the image
-left_flower = Image_dict["Fleuron_1"]
+left_flower = Image_dict["Fleuron_0"]
 left_flower = tl.down_sample(left_flower)
 #%%
 hull = convex_hull_image(left_flower)
@@ -27,6 +27,10 @@ plt.imshow(hull_boundary)
 region = (hull_boundary+left_flower)
 region = hull - region
 region = region * (region>0)
+plt.imshow(hull+left_flower,cmap = "gray")
+plt.show()
+plt.imshow(left_flower,cmap = "gray")
+plt.show()
 plt.imshow(region, cmap = "gray")
 plt.show()
 # %%

@@ -11,10 +11,7 @@ def morpho_one_direction(object,direction ="right"):
     if(direction == "left"):  u_alpha = [-1,0]
     if(direction == "above"): u_alpha = [0, 1]
     if(direction == "below"): u_alpha = [0,-1]
-    for i,j in np.argwhere(object>=0):
-        if(object[i,j]!=0):
-            new_image[i,j]=1
-            continue
+    for i,j in np.argwhere(object==0):
         vectors = [i,j]-coord
         vectors[:, [1, 0]] = vectors[:, [0, 1]]
         length = np.linalg.norm(vectors,axis = 1)

@@ -1,18 +1,10 @@
 # %%
-from ast import operator
-from cProfile import label
-import numpy as np
-import matplotlib.pyplot as plt
-from PIL import Image
-from pyparsing import srange
-from torch import greater
 import tools as tl
 from preprocess import *
 import relation.relation_analyse as rel
 import preprocess.Image_extract as ext
 import imp
 import os
-from os import path
 import json
 imp.reload(ext)
 imp.reload(tl)
