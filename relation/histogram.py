@@ -1,5 +1,7 @@
 import numpy as np
 import math
+import sys 
+sys.path.append('../')
 import plot 
 EPS = 1e-5
 def compute_histogram_angle(image1,image2, n_bin = 180):
@@ -17,11 +19,11 @@ def compute_histogram_angle(image1,image2, n_bin = 180):
         cosine = cosine[np.where(np.logical_and(cosine>=-1,cosine<=1))]
         #extends cosine field from [0, pi] to [-pi, pi], if the direction of vector
         # is point on negative y-axis, then the cosine is negative.
-        angle = np.append(angle,np.arccos(cosine)*np.where(vectors[:,1]>0,1,-1))
+        angle = np.append(angle,np.arccos(cosine)*np.where(vectors[:,1]<0,1,-1))
     hist, bins = np.histogram(angle,bins = n_bin)
     return hist,bins
 
-def compue_histogram_force(image1,image2,n_bin=180):
+def compute_histogram_force(image1,image2,n_bin=180):
     coord1 = np.argwhere(image1>0)
     coord2 = np.argwhere(image2>0)
     hist = np.zeros(n_bin)
@@ -40,7 +42,7 @@ def compue_histogram_force(image1,image2,n_bin=180):
         # is point on negative y-axis, then the cosine is negative.
         weight = 1 /np.power(length+1e-5, 2) 
         weight = weight*(weight<1)
-        angle = np.arccos(cosine)*np.where(vectors[:,1]>0,1,-1)
+        angle = np.arccos(cosine)*np.where(vectors[:,1]<0,1,-1)
         for i in range(len(angle)):
             nb_bin = int((angle[i]+math.pi)//step)
             hist[nb_bin] += weight[i] 
@@ -95,15 +97,15 @@ def compute_compability(hist, bins, step= 100):
         cen_g_list.append(center_of_gravity(compability, step = step))
     return cen_g_list,compability_list
 
-def demo_histogram_force(image1, image2, bin = 180, step = 100):
-    plot.plot_two_image(image1,image2)
-    hist, bins = compue_histogram_force(image1,image2,n_bin=bin)
+def demo_histogram_force(image1, image2,l1 = None, l2 = None, bin = 180, step = 100):
+    plot.plot_two_image(image1,image2,label1=l1, label2 = l2)
+    hist, bins = compute_histogram_force(image1,image2,n_bin=bin)
     cen_g, compability = compute_compability(hist,bins,step)
     plot.plot_histogram(hist,bins)
     plot.plot_compability(step,cen_g,compability)
 
-def demo_histogram_angle(image1, image2, bin = 180, step = 180):
-    plot.plot_two_image(image1,image2)
+def demo_histogram_angle(image1, image2,l1 = None, l2 = None, bin = 180, step = 100):
+    plot.plot_two_image(image1, image2, label1=l1, label2 = l2)
     hist, bins = compute_histogram_angle(image1,image2,n_bin=bin)
     cen_g, compability = compute_compability(hist,bins,step)
     plot.plot_histogram(hist,bins)
