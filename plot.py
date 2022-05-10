@@ -18,12 +18,16 @@ def plot_morpho(morpho_ref, morpho_res, nece_deg, poss_deg, mean_deg):
             + "possibility degree :"+"{:.2}\n".format(poss_deg[i])
             + "means: "+"{:.2}\n".format(mean_deg[i]))
     
-def plot_two_image(image1, image2):
+def plot_two_image(image1, image2, label1=None, label2=None):
     plt.figure(figsize=(10,10))
     plt.subplot(1,2,1)
-    plt.imshow(image1) 
+    if(label1!=None):
+        plt.xlabel(label1)
+    plt.imshow(image1, cmap = "gray") 
     plt.subplot(1,2,2)
-    plt.imshow(image2)
+    if(label2!=None):
+        plt.xlabel(label2)
+    plt.imshow(image2, cmap = "gray")
     plt.show()
     
 def plot_histogram(hist, bins):
