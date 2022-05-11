@@ -20,7 +20,7 @@ def compute_histogram_angle(image1,image2, n_bin = 180):
         #extends cosine field from [0, pi] to [-pi, pi], if the direction of vector
         # is point on negative y-axis, then the cosine is negative.
         angle = np.append(angle,np.arccos(cosine)*np.where(vectors[:,1]<0,1,-1))
-    hist, bins = np.histogram(angle,bins = n_bin)
+    hist, bins = np.histogram(angle,bins = n_bin, range = (-math.pi, math.pi))
     return hist,bins
 
 def compute_histogram_force(image1,image2,n_bin=180):
