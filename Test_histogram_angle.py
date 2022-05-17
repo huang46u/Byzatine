@@ -23,7 +23,16 @@ left_flower = tl.down_sample(left_flower)
 # %%
 his.demo_histogram_force(cross,left_flower,"Cross", "Flower")
 
-# %%
-his.demo_histogram_angle(cross,left_flower, "Cross", "Flower")
-# %%
 
+# %%
+a = np.zeros((100,100))
+b = np.zeros((100,100))
+a[40:60, 30:50] = 1
+b[20:30, 40:90 ] =1
+b[20:80, 80:90 ] =1
+plt.imshow(a+b, cmap = "gray")       
+# %%
+his.demo_histogram_angle(a,b,step = 200)        
+
+
+# %%

@@ -2,24 +2,29 @@ from cv2 import CAP_OPENNI_IMAGE_GENERATOR_OUTPUT_MODE, line
 import numpy as np
 import matplotlib.pyplot as plt
 from skimage.measure import block_reduce
-from skimage.morphology import binary_closing,label,disk, binary_dilation
+from skimage.morphology import binary_erosion,label,disk, binary_dilation
 from scipy.optimize import fmin
 from sympy import comp
 
-def plot_morpho(morpho_ref, morpho_res, nece_deg, poss_deg, mean_deg):
+def plot_morpho(morpho_ref, morpho_res, nece_deg, poss_deg, mean_deg,seperate = True):
     for i in range(4):
-        plt.figure(figsize = (10,10))
-        plt.subplot(1,2,1)
-        plt.imshow(morpho_res[i],cmap='gray')
-        plt.subplot(1,2,2)
-        plt.imshow(morpho_ref[i],cmap='gray')
-        plt.show()
+        if(seperate):
+            plot_two_image(morpho_ref[i],morpho_res[i])
+        else:
+            morpho_res[i] = np.where(morpho_res[i], 1, 0)
+            edge = morpho_res[i] - binary_erosion(morpho_res[i])
+            plt.imshow(edge)
+            plt.show()
+            coord = np.argwhere(edge)
+            morpho_ref[i][coord[:,0],coord[:,1]] = 0
+            plt.imshow(morpho_ref[i],cmap = 'gray')
+            plt.show()
         print("necessity degree: "+"{:.2}\n".format(nece_deg[i])
             + "possibility degree :"+"{:.2}\n".format(poss_deg[i])
             + "means: "+"{:.2}\n".format(mean_deg[i]))
     
 def plot_two_image(image1, image2, label1=None, label2=None):
-    plt.figure(figsize=(10,10))
+    plt.figure(figsize=(15,15))
     plt.subplot(1,2,1)
     if(label1!=None):
         plt.xlabel(label1)
