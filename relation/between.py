@@ -27,10 +27,10 @@ def fuzzy_histogram_dilation(image, hist):
                 dilation_image[i,j] = np.max(degrad)  
     return dilation_image
 
-def visualise_structure_element(hist1,hist2,size=500):
+def visualise_structuring_element(hist1,hist2,size=500):
     step = 2*math.pi/hist1.size
-    struct_element1 = np.zeros((500,500))
-    struct_element2 = np.zeros((500,500))
+    struct_element1 = np.zeros((size,size))
+    struct_element2 = np.zeros((size,size))
     for i,j in np.argwhere(struct_element1==0):
         x = i-size/2
         y = j-size/2
@@ -38,7 +38,7 @@ def visualise_structure_element(hist1,hist2,size=500):
         # filter the cosine value
         cosine = np.dot(np.array([y,x]),[1,0])/(length+1e-5)
         if(cosine<-1 or cosine>1): continue
-        angle = np.arccos(cosine)*np.where(x<0,1,-1)
+        angle = np.arccos(cosine)*np.where(x<0, 1, -1)
         nb_bin =  int((angle+math.pi)//step)
         struct_element1[i,j] = hist1[nb_bin-1]
         struct_element2[i,j] = hist2[nb_bin-1]
