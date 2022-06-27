@@ -73,7 +73,6 @@ def inside_body(object, body):
     """
     Test if objects are inside the body
     
-    
     Args:
         object : object to test if it is insed the body
         body: image of person
@@ -82,7 +81,10 @@ def inside_body(object, body):
         if the object is totally inside the body
     """
     coord = np.argwhere(object>0)
-    return body[coord[:,0], coord[:,1]].sum()==len(coord)
+    a = body[coord[:,0], coord[:,1]].sum()
+    b = len(coord)
+    c = a/b
+    return c > 0.98
 
 def intersect_with_body(object, body):
     coord = np.argwhere(object>0)
