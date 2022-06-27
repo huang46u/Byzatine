@@ -10,7 +10,7 @@ import relation.between as bet
 import tools as tl
 import sys
 imp.reload(bet)
-imp.reload(his)
+imp.reload(plot)
 # %%
 json_path = "../Zacos-genevre/Zacos-Geneve/ann/cdn_2004_0319_A.jpg.json"
 Image_dict = ext.Extract_image_mask(json_path)
@@ -25,8 +25,9 @@ plt.imshow(person1)
 plt.show()
 plt.imshow(person2)
 # %%
-surr, d1, d2, hist1, hist2, bin1, bin2= bet.between(person1,person2,kernel_size=30)
-st1, st2 = bet.visualise_structure_element(hist1,hist2)
+surr, d1, d2, hist1, hist2, bin1, bin2 = bet.between(person1,person2,kernel_size=30)
+# %%
+st1, st2 = bet.visualise_structuring_element(hist1,hist2)
 # %%
 plot.plot_histogram(hist1,bin1)
 plot.plot_histogram(hist2, bin2)
@@ -41,19 +42,20 @@ plt.show()
 plt.xlabel("Intersection")
 plt.imshow(surr, cmap ="gray")
 # %%
-a = np.zeros(person1.shape)
-b = np.zeros(person1.shape)
+a = np.zeros((100,100))
+b = np.zeros((100,100))
 a[40:60, 30:50] = 1
 b[20:30, 40:90 ] =1
 b[20:70, 80:90 ] =1
 plt.imshow(a+b)       
 # %%
-his.demo_histogram_angle(a,b)                                                                                                         
+his.demo_histogram_angle(a,b)   
+his.demo_histogram_angle(b,a)                                                                                                      
 # %%
 surr, d1, d2, hist1, hist2, bin1, bin2 =bet.between(a,b,kernel_size=20)
 # %%
 struct_element1,struct_element2 = bet.visualise_structure_element(hist1,hist2)
-plot.plot_two_image(struct_element1,struct_element2, "Histogram_ab","Histogram_ba")
+plot.plot_two_image(struct_element1,struct_element2, "Histogram_RA","Histogram_AR")
 #%%
 plot.plot_histogram(hist1, bin1)
 plot.plot_histogram(hist2, bin2)
@@ -67,4 +69,8 @@ plt.show()
 plt.xlabel("Intersection")
 plt.imshow(surr, cmap ="gray")
 
+# %%
+newsurr = np.where(surr>0.8, surr, 0)
+plt.imshow(newsurr,cmap="gray")
+plt.show()
 # %%
