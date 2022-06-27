@@ -97,16 +97,16 @@ def compute_compability(hist, bins, step= 100):
         cen_g_list.append(center_of_gravity(compability, step = step))
     return cen_g_list,compability_list
 
-def demo_histogram_force(image1, image2,l1 = None, l2 = None, bin = 180, step = 100):
+def demo_histogram_force(image1, image2,l1 = None, l2 = None, label_hist = None, bin = 180, step = 100):
     plot.plot_two_image(image1,image2,label1=l1, label2 = l2)
     hist, bins = compute_histogram_force(image1,image2,n_bin=bin)
     cen_g, compability = compute_compability(hist,bins,step)
-    plot.plot_histogram(hist,bins)
+    plot.plot_histogram(hist,bins, label = label_hist)
     plot.plot_compability(step,cen_g,compability)
 
-def demo_histogram_angle(image1, image2,l1 = None, l2 = None, bin = 180, step = 100):
+def demo_histogram_angle(image1, image2,l1 = None, l2 = None,label_hist = None, bin = 180, step = 100):
     plot.plot_two_image(image1, image2, label1=l1, label2 = l2)
     hist, bins = compute_histogram_angle(image1,image2,n_bin=bin)
     cen_g, compability = compute_compability(hist,bins,step)
-    plot.plot_histogram(hist,bins)
+    plot.plot_histogram(hist,bins,label = label_hist)
     plot.plot_compability(step,cen_g,compability)

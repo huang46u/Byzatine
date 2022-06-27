@@ -21,8 +21,8 @@ cross = Image_dict["Croix_recroisetee_0"]
 cross =  tl.down_sample(cross)
 left_flower = tl.down_sample(left_flower)
 # %%
-his.demo_histogram_force(cross,left_flower,"Cross", "Flower")
-
+his.demo_histogram_force(cross,left_flower,"Cross", "Flower", "Histogram of angle", bin = 360)
+his.demo_histogram_force(cross,left_flower,"Cross", "Flower", "Histogram of angle", bin = 180)
 
 # %%
 a = np.zeros((100,100))
@@ -32,7 +32,7 @@ b[20:30, 40:90 ] =1
 b[20:80, 80:90 ] =1
 plt.imshow(a+b, cmap = "gray")       
 # %%
-his.demo_histogram_angle(a,b,step = 200)        
-
+his.demo_histogram_angle(a,b,"Object A", "Object B", "Histogram of angle, bin = 180", step = 100)        
+his.demo_histogram_angle(a,b,"Object A", "Object B", "Histogram of angle, bin = 180", step = 100)    
 
 # %%

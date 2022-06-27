@@ -35,10 +35,12 @@ def plot_two_image(image1, image2, label1=None, label2=None):
     plt.imshow(image2, cmap = "gray")
     plt.show()
     
-def plot_histogram(hist, bins):
+def plot_histogram(hist, bins, label = None):
     #Plot histogram of angle
     width = np.diff(bins)
     center = (bins[:-1] + bins[1:]) / 2
+    if(label!=None):
+        plt.xlabel(label)
     plt.bar(center, hist/np.max(hist), align='center', width=width)
     plt.show()
     
