@@ -10,20 +10,27 @@ import relation.between as bet
 import tools as tl
 import sys
 imp.reload(bet)
+imp.reload(ext)
 imp.reload(plot)
+imp.reload(tl)
 # %%
-json_path = "../Zacos-genevre/Zacos-Geneve/ann/cdn_2004_0319_A.jpg.json"
+json_path = "../Zacos-genevre/Zacos-Geneve/ann/cdn_2004_0439_A.jpg.json"
 Image_dict = ext.Extract_image_mask(json_path)
 print(Image_dict.keys())
 # %%
-person1 = Image_dict['Person_Body_0']
-person2 = Image_dict['Person_Body_1']
+person1 = Image_dict['Person_Emperor_0']
+person2 = Image_dict['Person_Virgin_Mary_0']
+globe = Image_dict['Object_Globe_0']
 person1 = tl.down_sample(person1)
 person2 = tl.down_sample(person2)
+globe = tl.down_sample(globe)
 
 plt.imshow(person1)
 plt.show()
 plt.imshow(person2)
+plt.show()
+plt.imshow(globe)
+# %%
 # %%
 surr, d1, d2, hist1, hist2, bin1, bin2 = bet.between(person1,person2,kernel_size=30)
 # %%
@@ -33,10 +40,10 @@ plot.plot_histogram(hist1,bin1)
 plot.plot_histogram(hist2, bin2)
 plot.plot_two_image(st1,st2,"st1","str2")
 # %%
-plt.xlabel("Dilation of child")
+plt.xlabel("Dilation of Emperor")
 plt.imshow(d1,cmap="gray")
 plt.show()
-plt.xlabel("Dilation of adult")
+plt.xlabel("Dilation of Virgin Mary")
 plt.imshow(d2,cmap = "gray")
 plt.show()
 plt.xlabel("Intersection")
@@ -51,11 +58,22 @@ plt.imshow(a+b)
 # %%
 his.demo_histogram_angle(a,b)   
 his.demo_histogram_angle(b,a)                                                                                                      
+
 # %%
-surr, d1, d2, hist1, hist2, bin1, bin2 =bet.between(a,b,kernel_size=20)
+surr, d1, d2, hist1, hist2, bin1, bin2 =bet.between(a,b,kernel_size=20, bin = 250)
 # %%
-struct_element1,struct_element2 = bet.visualise_structure_element(hist1,hist2)
+struct_element1,struct_element2 = bet.visualise_structuring_element(hist1,hist2)
 plot.plot_two_image(struct_element1,struct_element2, "Histogram_RA","Histogram_AR")
+
+#%%
+object, convex_inter, ness, poss, mean = bet.eval_between(globe, surr, d1, d2)
+plt.xlabel("Convex hull")
+plt.imshow(convex_inter,cmap = "gray")
+plt.show()
+plt.xlabel("Relation between")
+plt.imshow(object + person1 + person2,cmap = "gray")
+print(ness, poss, mean)
+
 #%%
 plot.plot_histogram(hist1, bin1)
 plot.plot_histogram(hist2, bin2)
