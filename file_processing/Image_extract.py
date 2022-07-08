@@ -13,24 +13,43 @@ sys.path.append('../')
 import tools as tl
 from skimage.draw import polygon
 import re
-def add_label(label, img, image_dict, label_set, category = False):
+
+def add_label(label, img, image_dict, label_set, cate = False):
     label_splited = label.split('_')
-    if(category):
+    if(cate):
         if(label_splited[0] not in image_dict.keys()):
             image_dict[label_splited[0]] = []
     
     if(not (label) in label_set.keys()):
         label_set[label] = 0
-        if(category):
+        if(cate):
             image_dict[label_splited[0]].append((label, img))
         else:
             image_dict[label+"_" + str(label_set[label])]= img
     else:
         label_set[label]+=1
-        if(category):
+        if(cate):
             image_dict[label_splited[0]].append((label+"_"+str(label_set[label]), img))
         else:
             image_dict[label+"_" + str(label_set[label])]= img
+    return image_dict
+
+def add_body(label, img, image_dict, label_set, cate = False):
+    label_splited = label.split('_')
+    if(cate):
+        if(label_splited[0] not in image_dict.keys()):
+            image_dict[label_splited[0]] = []
+    
+    if(not (label) in label_set.keys()):
+        if(cate):
+            image_dict[label_splited[0]].append((label, img))
+        else:
+            image_dict[label]= img
+    else:
+        if(cate):
+            image_dict[label_splited[0]].append((label), img)
+        else:
+            image_dict[label]= img
     return image_dict
 
 def Extract_image_mask(json_path, category = False, filter = False, L_dict = None):
@@ -73,12 +92,12 @@ def Extract_image_mask(json_path, category = False, filter = False, L_dict = Non
                 #we test if one is included in another
                 label_splited = label.split("_")
                 if(label_splited[0] == "Person" and label_splited[1] == "Body"):
-                    body_dict[label + str(len(body_dict))] = new_image
+                    body_dict[label + "_"+ str(len(body_dict))] = new_image
                 else: 
-                    Image_dict = add_label(label,new_image, Image_dict, label_set, category=True)
+                    Image_dict = add_label(label,new_image, Image_dict, label_set, cate=category)
     if("Person" not in Image_dict.keys()):
         for l, img in body_dict.items():
-             Image_dict = add_label(l, img, Image_dict,label_set, category = True )
+             Image_dict = add_body(l, img, Image_dict,label_set, category )
     else:
         for l1, img1 in body_dict.items():
             overlap = False
@@ -87,7 +106,7 @@ def Extract_image_mask(json_path, category = False, filter = False, L_dict = Non
                     overlap = True
                     break
             if(not overlap):       
-                Image_dict = add_label(l1, img1, Image_dict, label_set, category = True)
+                Image_dict = add_body(l1, img1, Image_dict, label_set, category)
     return Image_dict
                     
 def Extract_image_part(json_path, label, pattern):
