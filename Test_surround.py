@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from skimage.morphology import convex_hull_image, area_opening, binary_erosion,binary_opening
 import relation.surround as su
 import tools as tl
-import preprocess.Image_extract as ext
+import file_processing.Image_extract as ext
 import enlacement.enlacement as en
 imp.reload(tl)
 imp.reload(su)
@@ -46,22 +46,55 @@ json_path = "../Qijia/ds0/ann/Tatish 2805 AA 2016 copie.jpg.json"
 Image_dict = ext.Extract_image_mask(json_path)
 print(Image_dict.keys())
 # %%
+Marche1 = Image_dict['Marche_0']
+Marche2 = Image_dict['Marche_1']
+Marche3 = Image_dict['Marche_2']
+Marche = Marche1 + Marche2 +Marche3
+Croix = Image_dict['Croix_0']
 round = Image_dict["Grenetis_0"]
 round = tl.down_sample(round)
+croix = tl.down_sample(Croix)
+marche = tl.down_sample(Marche)
+plt.xlabel("Grenetis")
 plt.imshow(round,cmap ='gray')
 plt.show()
-np.max(round)
+plt.imshow(Marche, cmap = 'gray')
+plt.show()
+plt.xlabel("Marche")
+plt.imshow(marche, cmap = "gray")
+plt.show()
+plt.xlabel("Croix")
+plt.imshow(croix, cmap = "gray")
+
 #%%
 chull = convex_hull_image(round)
 region = np.logical_xor(chull,round)
 region = binary_opening(region)*1
 plt.imshow(region,cmap = 'gray')
 # %%
-membership = su.surround(round,region,n_dir = 120)
+membership = su.surround(round,region,n_dir = 20)
+# %%
 plt.imshow(membership, cmap = 'gray')
 plt.show()
 print(np.max(membership))
 print(np.min(membership))
 print(np.mean(membership[np.where(membership!=0)]))
+
+# %%
+img = np.minimum(membership, marche)
+img += np.minimum(membership, croix)
+plt.xlabel("Relation Surround")
+plt.imshow(img, cmap = "gray")
+
+# %%
+plt.xlabel("Fuzzy landscape")
+plt.imshow(membership, cmap = 'gray')
+plt.show()
+
+# %%
+val= img[np.where(img!=0)]
+print(np.max(val))
+print(np.min(val))
+print(np.mean(val))
 
 # %%
