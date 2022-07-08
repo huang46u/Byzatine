@@ -8,6 +8,7 @@ import os
 import cv2
 from sympy import comp
 from skimage.draw import line as skimage_line
+from skimage.morphology import convex_hull_image
 def unique_value(img):
     return np.unique(img.reshape(-1,img.shape[1]))[1:]
 
@@ -89,6 +90,10 @@ def inside_body(object, body):
 def intersect_with_body(object, body):
     coord = np.argwhere(object>0)
     return body[coord[:,0], coord[:,1]].sum()>0
+
+def convex_hull(img1, img2):
+    return convex_hull_image(img1+img2).astype(np.uint0)
+    
     
     
     

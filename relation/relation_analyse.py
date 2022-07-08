@@ -6,8 +6,8 @@ from PIL import Image
 from pyparsing import srange
 from torch import greater
 import tools as tl
-from preprocess import *
-import preprocess.Image_extract as ext
+
+import file_processing.Image_extract as ext
 import relation.morpho as morpho
 import imp
 import os
@@ -25,25 +25,22 @@ def relation_person_person(person1, person2, data):
     _, _, _, _, means = morpho.morpho_relation(person1_img, person2_img)
     rel = ["Rel_Left", "Rel_Right"]
     relation["obj1"] = person1[0]
-    relation["obj2"] = person2[0]
     relation["rel"] = rel[np.argmax(means[:2])]
     data["data"].append(relation)
-    rel = ["Rel_Left", "Rel_Right"]
     relation = {}
     relation["obj1"] = person2[0]
-    relation["obj2"] = person1[0]
     relation["rel"] = rel[np.argmin(means[:2])]
     data["data"].append(relation)
     return data
     
-def relation_person_center(person, data):
+def relation_center(object, data):
     relation = {}
-    relation["obj1"] = person[0]
+    relation["obj1"] = object[0]
     relation["rel"] = "Rel_Center"
     data["data"].append(relation)
     return data
 
-def relation_person_object(person, object, data):
+def relation_center_object_2(person, object, data):
     relation = {}
     person_img = tl.down_sample(person[1])
     object_img = tl.down_sample(object[1])
@@ -51,25 +48,31 @@ def relation_person_object(person, object, data):
     rel = ["Rel_Left", "Rel_Right"]
     relation["obj1"] = person[0]
     relation["obj2"] = object[0]
-    """#To Do: Shouldn't test the relation "in_front_of" here
-    if(abs(means[0] - means[1])<0.2): 
-        
-        relation["rel"] = "Rel_In_Front_Of"
-    else:"""
     relation["rel"] = rel[np.argmax(means[:2])]
+    data["data"].append(relation)
+    return data
+
+def relation_center_object_4(cross, object, data):
+    relation = {}
+    cross_img = tl.down_sample(cross[1])
+    object_img = tl.down_sample(object[1])
+    _, _, _, _, means = morpho.morpho_relation(cross_img, object_img)
+    rel = ["Rel_Left", "Rel_Right", "Rel_Above", "Rel_Below"]
+    relation["obj1"] = cross[0]
+    relation["obj2"] = object[0]
+    relation["rel"] = rel[np.argmax(means)]
     data["data"].append(relation)
     return data
 
 def relation_in_front_of(person1, person2, data):
     relation = {}
-    relation["obj1"] = person2[0]
-    relation["obj2"] = person1[0]
+    relation["obj1"] = person1[0]
+    relation["obj2"] = person2[0]
     relation["rel"] = "Rel_In_Front_Of"
     data["data"].append(relation)
     return data
 
-def analyse_one_person_relation(person, image_dict,label_dict, area_dict, data):
-    data = relation_person_center(person, data)
+def analyse_one_person_relation(person, image_dict, label_dict, area_dict, data):
     head = ("Part_head", label_dict["Part_head"])
     if("Part_head" in label_dict.keys()):
         head = (person[0],label_dict["Part_head"])
@@ -79,11 +82,23 @@ def analyse_one_person_relation(person, image_dict,label_dict, area_dict, data):
             for object in object_dict:
                 label_word = object[0].split("_")
                 if(label_word[1] not in label_ingored):
+                    if(label_word[1] == "hand" and not 
+                       tl.intersect_with_body(object[1],person[1])):
+                        continue
                     if(area_dict[object[0]] < area_dict[person[0]]):
                         if(tl.intersect_with_body(object[1], person[1])):
-                            data = relation_person_object(head, object ,data)
+                            data = relation_center_object_2(head, object ,data)
                         else:
-                            data = relation_person_object(person, object, data)
+                            data = relation_center_object_4(person, object, data)
+    return data
+
+def analyse_croix_object_relation(croix, image_dict, data):
+    data = relation_center(croix, data)
+    for label in ["Fleuron", "Step", "Ornament"]:
+        if(label in image_dict.keys()):
+            object_dict = image_dict[label]
+            for object in object_dict:
+                data = relation_center_object_4(croix, object, data)
     return data
 
 def compute_area(Image_dict):
@@ -109,12 +124,37 @@ def compute_area(Image_dict):
                 ...
     Returs:
     -------
+        sorted_array_dict: dictionnary
+            keys: string, category
+                value: array of tuple, every element contain the label of 
+                mask and the mask image itself. The order is decreasing according
+                to the area covered by the mask
+                ex: {"Person":
+                        [
+                            ("Person_Body_0", #image),
+                            ("Person_Vrigin_Marie_0", #image),
+                            ...
+                        ],
+                    "Part":
+                        [
+                            ("Part_hand_0", #hand_image),
+                            ("Part_hand_1", #hand_image),
+                            ...
+                        ],
+                    ...
         label_dict : dictionnary
-            key: mask label
-            value: corresponding image 
-        sorted_array_dict:
-            key: mask label in descending order of area cover
-            value: 
+            keys: string, mask label
+            value: ndarray, corresponding image
+            ex: {
+                    "Person_Body": #image,
+                    "Part_hand": #hand_image,
+                    "Person_Virgin_Marie": #Virgin_marie_image
+                    ...
+                }
+        sorted_image_dict:
+            key: mask label in descending order according to the 
+            area covered by the mask
+            value: the percentage of the area coverage
     """
     area_dict = {}
     label_dict = {}
@@ -146,8 +186,9 @@ def relation_analyse(image_dict, label_dict, area_dict):
     ----------
         image_dict: dictionnary
             keys: string, category
-            value: array of tuple, every element correspond the label of 
-            mask and the mask image itself
+            value: array of tuple, every element contain the label of 
+            mask and the mask image itself. The order is decreasing according
+            to the area covered by the mask
             ex: {"Person":
                     [
                         ("Person_Body_0", #image),
@@ -183,29 +224,40 @@ def relation_analyse(image_dict, label_dict, area_dict):
     data["data"] = []
     if(len(image_dict.keys()) < 2):
         return
-    
-    if(len(image_dict["Person"]) == 1):
-        person = image_dict["Person"][0]
-        data = analyse_one_person_relation(person, image_dict,label_dict, area_dict, data)
-    
-    elif(len(image_dict["Person"]) == 2):
-        #Person1's covered area is bigger than Person2
-        person1 = image_dict["Person"][0]
-        person2 = image_dict["Person"][1]
-        person_area1 = area_dict[person1[0]]
-        person_area2 = area_dict[person2[0]]
-        #relation between two people
-        #If one person's head is totally included by another person's area
-        #we believe that the first person is in front of another one
-        if(abs(person_area1 - person_area2) > THRESHOLD):
-                data = relation_person_center(person1, data)
-                if(tl.inside_body(person2[1], person1[1])): 
-                    data = relation_in_front_of(person1, person2, data)
-                else:
-                    data = relation_person_object(person1,person2,data)
-        else:
-            data = relation_person_person(person1,person2,data)
+    if("Person" in image_dict.keys()):
+        if(len(image_dict["Person"]) == 1):
+            person = image_dict["Person"][0]
+            data = relation_center(person, data)
+            data = analyse_one_person_relation(person, image_dict,label_dict, area_dict, data)
+        
+        elif(len(image_dict["Person"]) == 2):
+            #Person1's area is bigger than Person2
+            person1 = image_dict["Person"][0]
+            person2 = image_dict["Person"][1]
+            person_area1 = area_dict[person1[0]]
+            person_area2 = area_dict[person2[0]]
+            #relation between two people
+            #If one person's head is totally included by another person's area
+            #we believe that the first person is in front of another one
+            if(abs(person_area1 - person_area2) > THRESHOLD):
+                    data = relation_center(person1, data)
+                    if(tl.inside_body(person2[1], person1[1])): 
+                        data = relation_in_front_of(person1, person2, data)
+                    else:
+                        data = relation_center_object_2(person1,person2,data)
+                    data = analyse_one_person_relation(person1, image_dict,label_dict,area_dict,data)
+            else:
+                data = relation_person_person(person1,person2,data)
+    elif("Cross" in image_dict.keys()):
+        croix = image_dict["Cross"][0]
+        data = analyse_croix_object_relation(croix, image_dict,data)
     return data
 
 
-
+def relation_compare(file1, file2):
+    rel1, rel2 = {}
+    with open(file1,"r") as rel_file1:
+        rel1 = json.load(rel_file1)
+    with open(file2,"r") as rel_file2:
+        rel2 = json.load(rel_file2)
+    
