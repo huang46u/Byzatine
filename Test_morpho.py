@@ -17,9 +17,11 @@ json_path = "../Qijia/ds0/ann/Tatish 1754 Andr¨¦ spatharocandidat . jpg copie A.
 Image_dict = ext.Extract_image_mask(json_path)
 print(Image_dict.keys())
 #%%
+Image_dict
+#%%
 # Extract differnt part of the image
-left_flower = Image_dict["Fleuron_1"]
-cross = Image_dict["Croix_recroisetee_1"]
+left_flower = Image_dict["Fleuron"][0][1]
+cross = Image_dict["Croix"][0][1]
 cross =  tl.down_sample(cross)
 left_flower = tl.down_sample(left_flower)
 # %%

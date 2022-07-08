@@ -1,5 +1,7 @@
 import numpy as np
 import math
+
+from sklearn import neighbors
 EPS = 1e-5
 def membership(beta_min):
     return max(0,1-2*beta_min/math.pi)
@@ -9,8 +11,8 @@ def morpho_one_direction(object,direction ="right"):
     new_image = np.zeros(object.shape)
     if(direction == "right"): u_alpha = [1, 0]
     if(direction == "left"):  u_alpha = [-1,0]
-    if(direction == "above"): u_alpha = [0, 1]
-    if(direction == "below"): u_alpha = [0,-1]
+    if(direction == "above"): u_alpha = [0,-1]
+    if(direction == "below"): u_alpha = [0, 1]
     for i,j in np.argwhere(object==0):
         vectors = [i,j]-coord
         vectors[:, [1, 0]] = vectors[:, [0, 1]]
@@ -43,5 +45,8 @@ def morpho_relation(object1, object2):
         morpho_res_list.append(new_image)
     return morpho_ref_list, morpho_res_list, nece_deg_list, poss_deg_list, mean_deg_list
 
+
+
+        
 
 
