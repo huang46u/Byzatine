@@ -4,19 +4,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 from pyparsing import srange
+from sympy import continued_fraction
 from torch import greater
 import tools as tl
 
 import file_processing.Image_extract as ext
 import relation.morpho as morpho
+import relation.surround as su
 import imp
 import os
 import json
 imp.reload(ext)
 imp.reload(tl)
-THRESHOLD = 0.05
+imp.reload(su)
+THRESHOLD = 0.03
 SYMETRY_THRESHOLD = 0.001
-label_ingored = set(["head","Beard", "Crown","Curly"])
+label_ingored = set(["head","Beard","Curly","Veil"])
     
 def relation_person_person(person1, person2, data):
     relation = {}
@@ -40,7 +43,15 @@ def relation_center(object, data):
     data["data"].append(relation)
     return data
 
-def relation_center_object_2(person, object, data):
+def relation_top(person, object, data):
+    relation = {}
+    relation["obj1"] = person[0]
+    relation["obj2"] = object[0]
+    relation["rel"] = "Rel_Top"
+    data["data"].append(relation)
+    return data
+
+def relation_center_object_lr(person, object, data):
     relation = {}
     person_img = tl.down_sample(person[1])
     object_img = tl.down_sample(object[1])
@@ -49,6 +60,18 @@ def relation_center_object_2(person, object, data):
     relation["obj1"] = person[0]
     relation["obj2"] = object[0]
     relation["rel"] = rel[np.argmax(means[:2])]
+    data["data"].append(relation)
+    return data
+
+def relation_center_object_td(person, object, data):
+    relation = {}
+    person_img = tl.down_sample(person[1])
+    object_img = tl.down_sample(object[1])
+    _, _, _, _, means = morpho.morpho_relation(person_img, object_img)
+    rel = ["Rel_Top", "Rel_Down"]
+    relation["obj1"] = person[0]
+    relation["obj2"] = object[0]
+    relation["rel"] = rel[np.argmax(means[-2::])]
     data["data"].append(relation)
     return data
 
@@ -76,20 +99,31 @@ def analyse_one_person_relation(person, image_dict, label_dict, area_dict, data)
     head = ("Part_head", label_dict["Part_head"])
     if("Part_head" in label_dict.keys()):
         head = (person[0],label_dict["Part_head"])
-    for label in ["Object", "Part"]:
+    for label in ["Object", "Part", "Nimbus"]:
         if(label in image_dict.keys()):
             object_dict = image_dict[label]
             for object in object_dict:
                 label_word = object[0].split("_")
                 if(label_word[1] not in label_ingored):
+                    #determine if "hand" is belong to current person
                     if(label_word[1] == "hand" and not 
                        tl.intersect_with_body(object[1],person[1])):
                         continue
-                    if(area_dict[object[0]] < area_dict[person[0]]):
+                    #Test the surround relation between nimbus, crown and head
+                    if(label_word[1] == "Crown" or label_word[0]=="Nimbus"):
+                        nece, poss, mean = su.eval_surround(object[1], head[1])
+                        if(mean>0.1):
+                            data = relation_top(head, object, data)
+                        continue
+                    """if(area_dict[object[0]] < area_dict[person[0]]):
                         if(tl.intersect_with_body(object[1], person[1])):
-                            data = relation_center_object_2(head, object ,data)
+                            data = relation_center_object_lr(head, object ,data)
                         else:
-                            data = relation_center_object_4(person, object, data)
+                            data = relation_center_object_4(person, object, data)"""
+                    if(tl.intersect_with_body(object[1], person[1])):
+                            data = relation_center_object_lr(head, object ,data)
+                    else:
+                        data = relation_center_object_4(person, object, data)        
     return data
 
 def analyse_croix_object_relation(croix, image_dict, data):
@@ -179,7 +213,6 @@ def compute_area(Image_dict):
             
     return sorted_array_dict, label_dict, sorted_image_dict
 
-
 def relation_analyse(image_dict, label_dict, area_dict):
     """
     Parameters: 
@@ -244,7 +277,7 @@ def relation_analyse(image_dict, label_dict, area_dict):
                     if(tl.inside_body(person2[1], person1[1])): 
                         data = relation_in_front_of(person1, person2, data)
                     else:
-                        data = relation_center_object_2(person1,person2,data)
+                        data = relation_center_object_lr(person1,person2,data)
                     data = analyse_one_person_relation(person1, image_dict,label_dict,area_dict,data)
             else:
                 data = relation_person_person(person1,person2,data)
@@ -253,11 +286,38 @@ def relation_analyse(image_dict, label_dict, area_dict):
         data = analyse_croix_object_relation(croix, image_dict,data)
     return data
 
-
 def relation_compare(file1, file2):
     rel1, rel2 = {}
     with open(file1,"r") as rel_file1:
         rel1 = json.load(rel_file1)
     with open(file2,"r") as rel_file2:
         rel2 = json.load(rel_file2)
-    
+
+def relation_extract_to_text(rel_data, filename):
+    with open(filename, 'w') as f:
+        for rel in rel_data["data"]:
+            if rel["rel"] == "Rel_Center":
+                f.write(rel["obj1"] + " is in the center of image\n")
+                continue
+            if rel["rel"] == "Rel_Left":
+                if("obj2" in rel.keys()):
+                    f.write(rel["obj2"] + " is on the left of " + rel["obj1"]+"\n")
+                else:
+                    f.write(rel["obj1"]+ " is on the left of the image \n")
+                continue
+            if rel["rel"] == "Rel_Right":
+                if("obj2" in rel.keys()):
+                    f.write(rel["obj2"] + " is on the right of " + rel["obj1"] +"\n")
+                else:
+                    f.write(rel["obj1"]+ " is on the right of the image \n")
+                continue
+            
+            if rel["rel"] == "Rel_Top":
+                f.write(rel["obj2"] + " is on the top of " + rel["obj1"] +"\n")
+                continue
+            if rel["rel"] == "Rel_Down":
+                f.write(rel["obj2"] + "is on the down of " + rel["obj1"] +"\n")
+                continue
+            if rel["rel"] == "Rel_In_Front_Of":
+                f.write(rel["obj2"] + "is in the front of " + rel["obj1"] +"\n")
+                continue

@@ -2,6 +2,7 @@
 sys.path.append('./enlacement')
 import imp
 import sys
+from turtle import left
 import numpy as np
 import matplotlib.pyplot as plt
 from skimage.morphology import convex_hull_image, area_opening, binary_erosion,binary_opening
@@ -33,6 +34,9 @@ plt.imshow(left_flower,cmap = "gray")
 plt.show()
 plt.imshow(region, cmap = "gray")
 plt.show()
+# %%
+region = su.candidate_region(left_flower)
+plt.imshow(region)
 # %%
 membership = su.surround(left_flower,region)
 # %%
@@ -67,8 +71,9 @@ plt.xlabel("Croix")
 plt.imshow(croix, cmap = "gray")
 
 #%%
-chull = convex_hull_image(round)
-region = np.logical_xor(chull,round)
+region = su.candidate_region(round)
+plt.imshow(region)
+#%%
 region = binary_opening(region)*1
 plt.imshow(region,cmap = 'gray')
 # %%

@@ -1,5 +1,8 @@
 import math 
 import numpy as np
+from relation.morpho import membership
+import matplotlib.pyplot as plt
+from skimage.morphology import convex_hull_image,binary_opening,binary_erosion
 import tools as tl
 def f(x):
     """
@@ -78,3 +81,25 @@ def surround(object, candidate_region, mode= "angle", n_dir = 120):
         else:
             raise("mode can only be 'anlge' or 'distance'")
     return membership_grade
+
+def candidate_region(surr_obj):
+    hull = convex_hull_image(surr_obj)
+    hull_boundary = hull-binary_erosion(hull)*1
+    region = (hull_boundary+surr_obj)
+    region = hull - region
+    region = region * (region>0)
+    return region
+
+def eval_surround(surr_obj, ref_obj):
+    area = len(ref_obj[np.where(ref_obj>0)])
+    if(area>3000):
+        surr_obj = tl.down_sample(surr_obj)
+        ref_obj = tl.down_sample(ref_obj)
+    region = candidate_region(surr_obj)
+    membership = surround(surr_obj, region)
+    surr = np.minimum(membership, ref_obj)
+    surr = surr[np.where(ref_obj!=0)]
+    if(len(surr)>0):
+        return np.min(surr), np.max(surr), np.mean(surr)
+    else:
+        return 0.0,0.0,0.0
