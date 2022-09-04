@@ -73,9 +73,12 @@ def plot_compability(step,cen_g,compability):
     plt.tight_layout()
     plt.show()
     
-def plot_sym_plan(image, symm_image, line_coord):
+def plot_sym_plan(image, symm_image, line_coord1, line_coord2):
     copy_image = image.copy()
-    copy_image[line_coord[:,0], line_coord[:,1]] = 1
+    x1, y1 =line_coord2
+    x2, y2 =line_coord1
+    copy_image[x1, y1] = 1
+    copy_image[x2, y2] = 1
     plt.figure(figsize=(10,10))  
     plt.subplot(1,2,1)
     plt.xlabel("Symetry plan") 

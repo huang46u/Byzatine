@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage.measure import label
 import tools as tl
-import preprocess.Image_extract as ext
+import file_processing.Image_extract as ext
 import relation.histogram as his
 import imp
 import plot

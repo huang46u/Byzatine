@@ -92,7 +92,10 @@ def Extract_image_mask(json_path, category = False, filter = False, L_dict = Non
                 #we test if one is included in another
                 label_splited = label.split("_")
                 if(label_splited[0] == "Person" and label_splited[1] == "Body"):
-                    body_dict[label + "_"+ str(len(body_dict))] = new_image
+                    if(len(body_dict)>0):
+                        body_dict[label + "_"+ str(len(body_dict))] = new_image
+                    else:  
+                        body_dict[label] = new_image
                 else: 
                     Image_dict = add_label(label,new_image, Image_dict, label_set, cate=category)
     if("Person" not in Image_dict.keys()):

@@ -1,4 +1,5 @@
 # %%
+from tkinter import Image
 from more_itertools import split_into
 from sqlalchemy import asc
 import tools as tl
@@ -27,6 +28,7 @@ labels_file = open("../Classes x annotation.txt", "r")
 labels_dict = [label.rstrip("\n") for label in labels_file]
 
 # %%
+#Relations extraction and descriptions generation
 for file in os.listdir(ann_path):
     filename = os.path.join(ann_path, file)
     print(filename)
@@ -47,23 +49,6 @@ for file in os.listdir(ann_path):
             rel.relation_extract_to_text(data, text_filename)
             with open(json_path, "w") as fp:
                 json.dump(data, fp)
-
-# %%
-filename = "../Zacos-genevre/Zacos-Geneve/ann/cdn_2004_0313_A.jpg.json"
-file = "cdn_2004_0313_A.jpg.json"
-Image_dict = ext.Extract_image_mask(filename, 
-                                        category=True, 
-                                        filter=True, 
-                                        L_dict = labels_dict)
-image_dict, label_dict, sorted_dict = rel.compute_area(Image_dict)
-if(len(image_dict) != 0):
-        json_path = os.path.join(relation_path, file)
-        data = rel.relation_analyse(image_dict, label_dict, sorted_dict)
-        if(data != None and len(data["data"]) != 0):
-            data['data'].sort(key = lambda k : k['rel'])
-            with open(json_path, "w") as fp:
-                json.dump(data, fp) 
-
 # %%
 df_list1 = []
 df_list2 = []
@@ -71,6 +56,7 @@ path_name = []
 rel_path1 = "../Zacos-genevre/Zacos-Geneve/rel/"
 rel_path2 = "../06-29 JSON Victoria"
 # %%
+# Add Json code into excel file
 for file in os.listdir(rel_path1):
     path_name.append(file)
     filename = os.path.join(rel_path1, file)

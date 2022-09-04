@@ -33,18 +33,19 @@ def symmetry_plot_data(image, param):
     u = np.array([np.cos(alpha), np.sin(alpha)])
     w,h = image.shape
     origin = (d*u).astype(np.int32)+ np.array([h/2,w/2]).astype(np.int32)    
-    line_coord = tl.bresenham_line(image,origin,alpha)
+    line_coord1 = tl.bresenham_ray(image,origin,alpha)
+    line_coord2 = tl.bresenham_ray(image,origin,alpha+np.pi)
     symm_image = symetry_image(image,alpha ,d)
-    return symm_image, line_coord
+    return symm_image, line_coord1,line_coord2
 
 def symmetry(image, param_init):
-    print("init value: ",tl.symetry_measure(param_init,image))
-    symm_original,line_original = tl.symmetry_plot_data(image,param_init)
-    plot.plot_sym_plan(image, symm_original,line_original)
-    opt =downhill_simplex(image,param_init)
+    print("init value: ",symetry_measure(param_init,image))
+    symm_original, line_original1, line_original2 = symmetry_plot_data(image,param_init)
+    plot.plot_sym_plan(image, symm_original,line_original1, line_original2)
+    opt = downhill_simplex(image,param_init)
     print(opt)
-    symm_optimized, line_optimized = symmetry_plot_data(image,opt)
-    plot.plot_sym_plan(image, symm_optimized, line_optimized)
+    symm_optimized, line_optimized1, line_optimized2 = symmetry_plot_data(image,opt)
+    plot.plot_sym_plan(image, symm_optimized, line_optimized1,line_optimized2)
     diff = symm_optimized - image
     return diff
 

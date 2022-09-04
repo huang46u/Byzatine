@@ -77,7 +77,7 @@ plt.imshow(region)
 region = binary_opening(region)*1
 plt.imshow(region,cmap = 'gray')
 # %%
-membership = su.surround(round,region,n_dir = 20)
+membership = su.surround(round,region,n_dir = 120)
 # %%
 plt.imshow(membership, cmap = 'gray')
 plt.show()
@@ -98,6 +98,40 @@ plt.show()
 
 # %%
 val= img[np.where(img!=0)]
+print(np.max(val))
+print(np.min(val))
+print(np.mean(val))
+
+# %%
+json_path = "../Zacos-genevre/Zacos-Geneve/ann/cdn_2004_0248_A.jpg.json"
+Image_dict = ext.Extract_image_mask(json_path)
+print(Image_dict.keys())
+# %%
+Nimbus = Image_dict["Nimbus_Simple_0"]
+Head = Image_dict["Part_head_0"]
+nimbus =  tl.down_sample(Nimbus)
+head = tl.down_sample(Head)
+# %%
+plt.imshow(head+nimbus, cmap= "gray")
+# %%
+region = su.candidate_region(nimbus)
+plt.imshow(region)
+#%%
+region = binary_opening(region)*1
+plt.imshow(region,cmap = 'gray')
+# %%
+membership = su.surround(nimbus,region,n_dir = 120)
+plt.imshow(membership, cmap = 'gray')
+plt.show()
+print(np.max(membership))
+print(np.min(membership))
+print(np.mean(membership[np.where(membership!=0)]))
+
+# %%
+img = np.minimum(head, membership)
+plt.imshow(img+nimbus,cmap = 'gray')
+# %%
+val = img[np.where(img!=0)]
 print(np.max(val))
 print(np.min(val))
 print(np.mean(val))

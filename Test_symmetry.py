@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import tools as tl
 import plot
-from preprocess import *
+
 from skimage import transform
-import preprocess.Image_extract as ext
+import file_processing.Image_extract as ext
 import imp
 import relation.symmetry as sm
 imp.reload(sm)
@@ -36,9 +36,9 @@ diff = sm.symmetry(wings_image,init)
 # %%
 #Compute missing part based on symmetry relation
 #Example 1
-image = plt.imread("../Qijia/ds0/masks_human/Tatish 2363 patrice strat?ge  copie 2 A.png")
+image = plt.imread("../Qijia/ds0/masks_human/Tatish 2363 patrice stratège  copie 2 A.png")
 plt.imshow(image)
-flower = ext.Extract_image_part("../Qijia/ds0/ann/Tatish 2363 patrice strat?ge  copie 2 A.jpg.json",'classTitle','Fleuron')
+flower = ext.Extract_image_part("../Qijia/ds0/ann/Tatish 2363 patrice stratège  copie 2 A.jpg.json",'classTitle','Fleuron')
 flower_image = flower["Fleuron0"]
 plt.imshow(flower_image,cmap="gray")
 init = np.array([0.5*np.pi, 30])

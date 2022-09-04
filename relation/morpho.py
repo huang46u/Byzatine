@@ -24,6 +24,26 @@ def morpho_one_direction(object,direction ="right"):
             new_image[i,j] = membership(beta_min)
     return new_image
 
+def build_fuzzy_landscape(center_object):
+    fuzzy_landscape = []
+    for dir in ["right", "left", "above", "below"]:
+        morpho_img = morpho_one_direction(center_object, direction = dir)
+        fuzzy_landscape.append(morpho_img)
+    return fuzzy_landscape
+
+def morpho_center_relation(fuzzy_landscape, cen_obj, object):
+    nece_deg_list = [] #necessity degree
+    poss_deg_list = [] #possibility degree
+    mean_deg_list = [] #mean membership grade
+    for dir_image in fuzzy_landscape: 
+        coord = np.argwhere(object>0)
+        coord = coord[np.where(cen_obj[coord[:,0],coord[:,1]]==0)]
+        morpho_value = dir_image[coord[:,0], coord[:,1]]
+        nece_deg_list.append(np.max(morpho_value))
+        poss_deg_list.append(np.min(morpho_value))
+        mean_deg_list.append(np.mean(morpho_value))
+    return nece_deg_list, poss_deg_list, mean_deg_list    
+    
 def morpho_relation(object1, object2):
     morpho_ref_list = []
     morpho_res_list = []
@@ -43,10 +63,8 @@ def morpho_relation(object1, object2):
         mean_deg_list.append(np.mean(morpho_value))
         morpho_ref_list.append(morpho_img)
         morpho_res_list.append(new_image)
-    return morpho_ref_list, morpho_res_list, nece_deg_list, poss_deg_list, mean_deg_list
+    return morpho_ref_list, morpho_res_list, nece_deg_list, poss_deg_list, mean_deg_list        
 
 
-
-        
 
 

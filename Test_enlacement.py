@@ -5,14 +5,14 @@ from PIL import Image
 import math
 from skimage.measure import label
 import tools as tl
-import preprocess.Image_extract as ext
+import file_processing.Image_extract as ext
 import imp
 import sys
 sys.path.append('./enlacement')
 import enlacement.enlacement as en
 imp.reload(tl)
 #%%
-json_path = "../Qijia/ds0/ann/Tatish 1754 Andr? spatharocandidat . jpg copie A.jpg.json"
+json_path = "../Qijia/ds0/ann/Tatish 1754 Andr¨¦ spatharocandidat . jpg copie A.jpg.json"
 Image_dict = ext.Extract_image_mask(json_path)
 print(Image_dict.keys())
 #%%

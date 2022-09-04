@@ -7,6 +7,7 @@ from pyparsing import srange
 from sympy import continued_fraction
 from torch import greater
 import tools as tl
+import re 
 
 import file_processing.Image_extract as ext
 import relation.morpho as morpho
@@ -20,6 +21,17 @@ imp.reload(su)
 THRESHOLD = 0.03
 SYMETRY_THRESHOLD = 0.001
 label_ingored = set(["head","Beard","Curly","Veil"])
+
+dictionnary = {"Person_Christ_Child": "l'enfant",
+               "Object_Shield":"un bouclier",
+                "Object_Sword": "une épée",
+                "Nimbus_Simple": "nimbé",
+                "Object_Scepter": "un sceptre",
+                "Object_Crown": "une couronne",
+                "Object_Book": "un évangile",
+                "Object_Globe": "un globe",
+                "Object_Labarum": "un long labarum",
+                "Object_Throne": "le throne"}    
     
 def relation_person_person(person1, person2, data):
     relation = {}
@@ -51,37 +63,26 @@ def relation_top(person, object, data):
     data["data"].append(relation)
     return data
 
-def relation_center_object_lr(person, object, data):
+def relation_center_object_lr(fuzzy_l, cen_obj, object, data):
     relation = {}
-    person_img = tl.down_sample(person[1])
     object_img = tl.down_sample(object[1])
-    _, _, _, _, means = morpho.morpho_relation(person_img, object_img)
+    person_img = tl.down_sample(cen_obj[1])
+    _, _, means = morpho.morpho_center_relation(fuzzy_l, person_img, object_img)
+    #inverse the order of left and right because the relation is mirrored
     rel = ["Rel_Left", "Rel_Right"]
-    relation["obj1"] = person[0]
+    relation["obj1"] = cen_obj[0]
     relation["obj2"] = object[0]
     relation["rel"] = rel[np.argmax(means[:2])]
     data["data"].append(relation)
     return data
 
-def relation_center_object_td(person, object, data):
+def relation_center_object_4(fuzzy_l, cen_obj, object, data):
     relation = {}
-    person_img = tl.down_sample(person[1])
     object_img = tl.down_sample(object[1])
-    _, _, _, _, means = morpho.morpho_relation(person_img, object_img)
-    rel = ["Rel_Top", "Rel_Down"]
-    relation["obj1"] = person[0]
-    relation["obj2"] = object[0]
-    relation["rel"] = rel[np.argmax(means[-2::])]
-    data["data"].append(relation)
-    return data
-
-def relation_center_object_4(cross, object, data):
-    relation = {}
-    cross_img = tl.down_sample(cross[1])
-    object_img = tl.down_sample(object[1])
-    _, _, _, _, means = morpho.morpho_relation(cross_img, object_img)
+    cen_obj_img = tl.down_sample(cen_obj[1])
+    _, _, means = morpho.morpho_center_relation(fuzzy_l, cen_obj_img, object_img)
     rel = ["Rel_Left", "Rel_Right", "Rel_Above", "Rel_Below"]
-    relation["obj1"] = cross[0]
+    relation["obj1"] = cen_obj[0]
     relation["obj2"] = object[0]
     relation["rel"] = rel[np.argmax(means)]
     data["data"].append(relation)
@@ -95,10 +96,16 @@ def relation_in_front_of(person1, person2, data):
     data["data"].append(relation)
     return data
 
-def analyse_one_person_relation(person, image_dict, label_dict, area_dict, data):
+def analyse_one_person_relation(person, image_dict, label_dict, data):
     head = ("Part_head", label_dict["Part_head"])
     if("Part_head" in label_dict.keys()):
         head = (person[0],label_dict["Part_head"])
+    #build fuzzy landcape of center person/object
+    person_img = tl.down_sample(person[1])
+    head_img = tl.down_sample(head[1])
+    fuzzy_landscape_person = morpho.build_fuzzy_landscape(person_img)
+    fuzzy_landscape_head = morpho.build_fuzzy_landscape(head_img)
+    #Evaluate for each object, the directional relations with respect to center person/object
     for label in ["Object", "Part", "Nimbus"]:
         if(label in image_dict.keys()):
             object_dict = image_dict[label]
@@ -115,24 +122,22 @@ def analyse_one_person_relation(person, image_dict, label_dict, area_dict, data)
                         if(mean>0.1):
                             data = relation_top(head, object, data)
                         continue
-                    """if(area_dict[object[0]] < area_dict[person[0]]):
-                        if(tl.intersect_with_body(object[1], person[1])):
-                            data = relation_center_object_lr(head, object ,data)
-                        else:
-                            data = relation_center_object_4(person, object, data)"""
                     if(tl.intersect_with_body(object[1], person[1])):
-                            data = relation_center_object_lr(head, object ,data)
+                            data = relation_center_object_lr(fuzzy_landscape_head,head, object, data)
                     else:
-                        data = relation_center_object_4(person, object, data)        
+                        data = relation_center_object_4(fuzzy_landscape_person, person, object, data)        
     return data
 
 def analyse_croix_object_relation(croix, image_dict, data):
     data = relation_center(croix, data)
+    #build fuzzy landscape of cross
+    cross_img = tl.down_sample(croix[1])
+    fuzzy_landscape_cross = morpho.build_fuzzy_landscape(cross_img)
     for label in ["Fleuron", "Step", "Ornament"]:
         if(label in image_dict.keys()):
             object_dict = image_dict[label]
             for object in object_dict:
-                data = relation_center_object_4(croix, object, data)
+                data = relation_center_object_4(fuzzy_landscape_cross,croix, object, data)
     return data
 
 def compute_area(Image_dict):
@@ -261,7 +266,7 @@ def relation_analyse(image_dict, label_dict, area_dict):
         if(len(image_dict["Person"]) == 1):
             person = image_dict["Person"][0]
             data = relation_center(person, data)
-            data = analyse_one_person_relation(person, image_dict,label_dict, area_dict, data)
+            data = analyse_one_person_relation(person, image_dict,label_dict,  data)
         
         elif(len(image_dict["Person"]) == 2):
             #Person1's area is bigger than Person2
@@ -270,54 +275,70 @@ def relation_analyse(image_dict, label_dict, area_dict):
             person_area1 = area_dict[person1[0]]
             person_area2 = area_dict[person2[0]]
             #relation between two people
-            #If one person's head is totally included by another person's area
+            #If one person's head is totally included by another person
             #we believe that the first person is in front of another one
             if(abs(person_area1 - person_area2) > THRESHOLD):
                     data = relation_center(person1, data)
                     if(tl.inside_body(person2[1], person1[1])): 
                         data = relation_in_front_of(person1, person2, data)
                     else:
-                        data = relation_center_object_lr(person1,person2,data)
-                    data = analyse_one_person_relation(person1, image_dict,label_dict,area_dict,data)
+                        center_person_img = tl.down_sample(person1[1])
+                        fuzzy_landscape_person = morpho.build_fuzzy_landscape(center_person_img)
+                        data = relation_center_object_lr(fuzzy_landscape_person, person1,person2,data)
+                    data = analyse_one_person_relation(person1, image_dict,label_dict, data)
             else:
                 data = relation_person_person(person1,person2,data)
     elif("Cross" in image_dict.keys()):
         croix = image_dict["Cross"][0]
         data = analyse_croix_object_relation(croix, image_dict,data)
-    return data
-
-def relation_compare(file1, file2):
-    rel1, rel2 = {}
-    with open(file1,"r") as rel_file1:
-        rel1 = json.load(rel_file1)
-    with open(file2,"r") as rel_file2:
-        rel2 = json.load(rel_file2)
+    return data  
 
 def relation_extract_to_text(rel_data, filename):
     with open(filename, 'w') as f:
+        obj1 = {}
+        obj2 = {}
+        for rel in rel_data["data"]:
+            obj1[rel["obj1"]] = rel["rel"]
+            if("obj2" in rel.keys()):
+                obj2[rel["obj2"]] = rel["rel"]
+            
         for rel in rel_data["data"]:
             if rel["rel"] == "Rel_Center":
-                f.write(rel["obj1"] + " is in the center of image\n")
+                f.write("Dans un cercle grenetis, " + rel["obj1"]+" situe au centre du seau. ")
+                continue
+            if rel["rel"] == "Rel_Top":
+                if(rel["obj2"] == "Nimbus_simple"):
+                    f.write(rel["obj1"] + " est nimbé. ")
+                elif(rel["obj2"] == "Object_Crown"):
+                    f.write(rel["obj1"]+ " est coiffé d'" + dictionnary[rel["obj2"]]+". ")
+                continue
+            if rel["rel"] == "Rel_In_Front_Of":
+                if("Object_Medaillon" in obj2.keys()):
+                    f.write(rel["obj1"] + " porte devant la poitine le médallion avec " + rel["obj2"]+". ")
+                else:
+                    f.write(rel["obj1"] + " porte devant la poitine " + dictionnary[rel["obj2"]] + ". ")                        
                 continue
             if rel["rel"] == "Rel_Left":
                 if("obj2" in rel.keys()):
-                    f.write(rel["obj2"] + " is on the left of " + rel["obj1"]+"\n")
+                    if(re.search('Part*', rel["obj2"])): continue
+                    object2 = rel["obj2"]
+                    if(rel["obj2"] in dictionnary.keys()):
+                        object2 = dictionnary[rel["obj2"]]
+                    f.write(rel["obj1"] + " tien dans sa main gauche " +object2+". ")
+                    if(rel["obj2"] == "Object_Book"):
+                        if("Part_hand" in obj2.keys()):
+                            f.write(" et bénit avec la main droite. ")
                 else:
-                    f.write(rel["obj1"]+ " is on the left of the image \n")
+                    f.write(rel["obj1"]+ " situe à gauche. ")
                 continue
             if rel["rel"] == "Rel_Right":
                 if("obj2" in rel.keys()):
-                    f.write(rel["obj2"] + " is on the right of " + rel["obj1"] +"\n")
+                    if(re.search('Part*', rel["obj2"])): continue
+                    object2 = rel["obj2"]
+                    if(rel["obj2"] in dictionnary.keys()):
+                            object2 = dictionnary[rel["obj2"]]
+                    f.write(rel["obj1"] + " tien dans sa main droite " +object2+ ". ")
                 else:
-                    f.write(rel["obj1"]+ " is on the right of the image \n")
+                    f.write(rel["obj1"]+ " situe à droite. ")
                 continue
-            
-            if rel["rel"] == "Rel_Top":
-                f.write(rel["obj2"] + " is on the top of " + rel["obj1"] +"\n")
-                continue
-            if rel["rel"] == "Rel_Down":
-                f.write(rel["obj2"] + "is on the down of " + rel["obj1"] +"\n")
-                continue
-            if rel["rel"] == "Rel_In_Front_Of":
-                f.write(rel["obj2"] + "is in the front of " + rel["obj1"] +"\n")
-                continue
+           

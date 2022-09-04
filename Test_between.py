@@ -5,7 +5,7 @@ import imp
 import plot
 sys.path.append("relation")
 import relation.histogram as his
-import preprocess.Image_extract as ext
+import file_processing.Image_extract as ext
 import relation.between as bet
 import tools as tl
 import sys
@@ -36,9 +36,9 @@ surr, d1, d2, hist1, hist2, bin1, bin2 = bet.between(person1,person2,kernel_size
 # %%
 st1, st2 = bet.visualise_structuring_element(hist1,hist2)
 # %%
-plot.plot_histogram(hist1,bin1)
-plot.plot_histogram(hist2, bin2)
-plot.plot_two_image(st1,st2,"st1","str2")
+plot.plot_histogram(hist1,bin1, label = "Virgin_Mary_Respect_Emperor")
+plot.plot_histogram(hist2, bin2, label = "Emperor_Respect_To_Virgin_Mary")
+plot.plot_two_image(st1,st2,"Virgin_Mary_Respect_Emperor","Emperor_Respect_To_Virgin_Mary")
 # %%
 plt.xlabel("Dilation of Emperor")
 plt.imshow(d1,cmap="gray")
@@ -48,6 +48,14 @@ plt.imshow(d2,cmap = "gray")
 plt.show()
 plt.xlabel("Intersection")
 plt.imshow(surr, cmap ="gray")
+# %%
+object, convex_inter, ness, poss, mean = bet.eval_between(globe, surr, d1, d2)
+plt.xlabel("Convex hull")
+plt.imshow(convex_inter,cmap = "gray")
+plt.show()
+plt.xlabel("Relation between")
+plt.imshow(object + person1 + person2,cmap = "gray")
+print(ness, poss, mean)
 # %%
 a = np.zeros((100,100))
 b = np.zeros((100,100))
@@ -63,16 +71,7 @@ his.demo_histogram_angle(b,a)
 surr, d1, d2, hist1, hist2, bin1, bin2 =bet.between(a,b,kernel_size=20, bin = 250)
 # %%
 struct_element1,struct_element2 = bet.visualise_structuring_element(hist1,hist2)
-plot.plot_two_image(struct_element1,struct_element2, "Histogram_RA","Histogram_AR")
-
-#%%
-object, convex_inter, ness, poss, mean = bet.eval_between(globe, surr, d1, d2)
-plt.xlabel("Convex hull")
-plt.imshow(convex_inter,cmap = "gray")
-plt.show()
-plt.xlabel("Relation between")
-plt.imshow(object + person1 + person2,cmap = "gray")
-print(ness, poss, mean)
+plot.plot_two_image(struct_element1,struct_element2)
 
 #%%
 plot.plot_histogram(hist1, bin1)
@@ -87,8 +86,4 @@ plt.show()
 plt.xlabel("Intersection")
 plt.imshow(surr, cmap ="gray")
 
-# %%
-newsurr = np.where(surr>0.8, surr, 0)
-plt.imshow(newsurr,cmap="gray")
-plt.show()
 # %%
